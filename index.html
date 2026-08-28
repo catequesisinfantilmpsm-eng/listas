@@ -505,7 +505,7 @@ async function loadSheet(){
       throw new Error('NOT_FOUND');
     }
 
-    const parsed = Papa.parse(csvText.trim(), {skipEmptyLines:'greedy'});
+    const parsed = Papa.parse(csvText.trim(), {skipEmptyLines:false});
     const rows = parsed.data;
 
     // Fila 1 (idx 0): libre/título. Fila 2 (idx 1): encabezados (NO, APELLIDO PATERNO, APELLIDO MATERNO, NOMBRE(S)).
