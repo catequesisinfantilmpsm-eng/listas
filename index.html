@@ -61,6 +61,27 @@
     letter-spacing:-0.01em;
     color:var(--evergreen-deep);
   }
+  .institution-block{
+    text-align:center;
+    margin-bottom:20px;
+  }
+  .parish-name{
+    font-family:'Fraunces',serif;
+    font-weight:700;
+    font-size:clamp(22px,3.6vw,32px);
+    line-height:1.25;
+    letter-spacing:.01em;
+    color:var(--evergreen-deep);
+    margin-bottom:6px;
+  }
+  .catekids-tag{
+    font-family:'Fraunces',serif;
+    font-weight:700;
+    font-style:italic;
+    font-size:clamp(20px,3vw,26px);
+    color:var(--brass);
+    letter-spacing:.04em;
+  }
   .subtitle{
     font-family:'IBM Plex Mono',monospace;
     font-size:12px;
@@ -267,6 +288,7 @@
   @media print{
     body{background:#fff; padding:0;}
     .panel.controls, .actions-row, footer.signoff, header.top .subtitle{display:none !important;}
+    .institution-block{margin-bottom:10px;}
     header.top{border-bottom:2px solid #000; margin-bottom:16px;}
     .panel{box-shadow:none; border:none; padding:0;}
     table{page-break-inside:auto;}
@@ -282,6 +304,11 @@
 </head>
 <body>
 <div class="wrap">
+
+  <div class="institution-block">
+    <div class="parish-name">MISIÓN PARROQUIAL<br>EL SEÑOR DE LA MISERICORDIA</div>
+    <div class="catekids-tag">CATEKIDS</div>
+  </div>
 
   <header class="top">
     <div class="brand-mark">
