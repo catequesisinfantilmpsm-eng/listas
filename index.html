@@ -286,15 +286,24 @@
   @keyframes spin{to{transform:rotate(360deg);}}
 
   @media print{
-    @page{ size: auto; margin: 10mm; }
+    @page{ size: auto; margin: 8mm; }
     body{background:#fff; padding:0;}
     .panel.controls, .actions-row, footer.signoff, header.top .subtitle{display:none !important;}
-    .institution-block{margin-bottom:10px;}
-    header.top{border-bottom:2px solid #000; margin-bottom:16px;}
+    .institution-block{margin-bottom:6px;}
+    .parish-name{font-size:13px; line-height:1.2; margin-bottom:2px;}
+    .catekids-tag{font-size:11px;}
+    header.top{border-bottom:1.5px solid #000; margin-bottom:8px; padding-bottom:6px;}
+    header.top h1{font-size:18px;}
     .panel{box-shadow:none; border:none; padding:0;}
+    .sheet-head{margin-bottom:2px;}
+    .sheet-head .group-name{font-size:16px;}
+    .sheet-head .meta{font-size:9px;}
+    .count-badge{font-size:8px; padding:1px 6px;}
     table{page-break-inside:auto;}
     tr{page-break-inside:avoid;}
-    thead th{background:#eee !important; color:#000 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
+    thead th{font-size:8.5px; padding:4px 5px; background:#eee !important; color:#000 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
+    tbody td{font-size:10.5px; padding:3px 5px;}
+    .box{width:11px; height:11px;}
     .wrap{
       transform: scale(var(--print-scale, 1));
       transform-origin: top center;
@@ -308,6 +317,18 @@
   body.print-sim header.top .subtitle{
     display:none !important;
   }
+  body.print-sim .institution-block{margin-bottom:6px;}
+  body.print-sim .parish-name{font-size:13px; line-height:1.2; margin-bottom:2px;}
+  body.print-sim .catekids-tag{font-size:11px;}
+  body.print-sim header.top{border-bottom:1.5px solid #000; margin-bottom:8px; padding-bottom:6px;}
+  body.print-sim header.top h1{font-size:18px;}
+  body.print-sim .sheet-head{margin-bottom:2px;}
+  body.print-sim .sheet-head .group-name{font-size:16px;}
+  body.print-sim .sheet-head .meta{font-size:9px;}
+  body.print-sim .count-badge{font-size:8px; padding:1px 6px;}
+  body.print-sim thead th{font-size:8.5px; padding:4px 5px;}
+  body.print-sim tbody td{font-size:10.5px; padding:3px 5px;}
+  body.print-sim .box{width:11px; height:11px;}
 
   @media (max-width:600px){
     .sheet-head{flex-direction:column; align-items:flex-start;}
@@ -612,7 +633,8 @@ printBtn.addEventListener('click', () => window.print());
 const MM_TO_PX = 96 / 25.4;
 const PAGE_WIDTH_MM = 215.9;   // Carta
 const PAGE_HEIGHT_MM = 279.4;  // Carta
-const PAGE_MARGIN_MM = 10;
+const PAGE_MARGIN_MM = 8;
+const SAFETY_FACTOR = 0.96; // margen extra para que nunca se pase a una 2a hoja
 
 function pxFromMM(mm){ return mm * MM_TO_PX; }
 
@@ -633,7 +655,7 @@ function computeAndApplyPrintScale(){
   wrapEl.style.maxWidth = prevMaxWidth;
   document.body.classList.remove('print-sim');
 
-  let scale = Math.min(1, usableHeightPx / measuredHeight);
+  let scale = Math.min(1, (usableHeightPx / measuredHeight) * SAFETY_FACTOR);
   if(!isFinite(scale) || scale <= 0) scale = 1;
   document.documentElement.style.setProperty('--print-scale', scale.toFixed(4));
 }
