@@ -286,6 +286,7 @@
   @keyframes spin{to{transform:rotate(360deg);}}
 
   @media print{
+    @page{ size: auto; margin: 10mm; }
     body{background:#fff; padding:0;}
     .panel.controls, .actions-row, footer.signoff, header.top .subtitle{display:none !important;}
     .institution-block{margin-bottom:10px;}
@@ -294,6 +295,18 @@
     table{page-break-inside:auto;}
     tr{page-break-inside:avoid;}
     thead th{background:#eee !important; color:#000 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
+    .wrap{
+      transform: scale(var(--print-scale, 1));
+      transform-origin: top center;
+    }
+  }
+
+  /* Usado solo momentáneamente por JS para medir el alto real antes de imprimir */
+  body.print-sim .panel.controls,
+  body.print-sim .actions-row,
+  body.print-sim footer.signoff,
+  body.print-sim header.top .subtitle{
+    display:none !important;
   }
 
   @media (max-width:600px){
@@ -580,6 +593,38 @@ function escapeHtml(str){
 loadBtn.addEventListener('click', loadSheet);
 refreshBtn.addEventListener('click', loadSheet);
 printBtn.addEventListener('click', () => window.print());
+
+// --- Ajuste automático para que la lista siempre quepa en 1 sola hoja al imprimir ---
+const MM_TO_PX = 96 / 25.4;
+const PAGE_WIDTH_MM = 215.9;   // Carta
+const PAGE_HEIGHT_MM = 279.4;  // Carta
+const PAGE_MARGIN_MM = 10;
+
+function pxFromMM(mm){ return mm * MM_TO_PX; }
+
+function computeAndApplyPrintScale(){
+  const wrapEl = document.querySelector('.wrap');
+  if(!wrapEl) return;
+
+  const usableWidthPx = pxFromMM(PAGE_WIDTH_MM - PAGE_MARGIN_MM * 2);
+  const usableHeightPx = pxFromMM(PAGE_HEIGHT_MM - PAGE_MARGIN_MM * 2);
+
+  const prevMaxWidth = wrapEl.style.maxWidth;
+  document.body.classList.add('print-sim');
+  wrapEl.style.maxWidth = usableWidthPx + 'px';
+  void wrapEl.offsetHeight; // forzar reflow
+
+  const measuredHeight = wrapEl.scrollHeight;
+
+  wrapEl.style.maxWidth = prevMaxWidth;
+  document.body.classList.remove('print-sim');
+
+  let scale = Math.min(1, usableHeightPx / measuredHeight);
+  if(!isFinite(scale) || scale <= 0) scale = 1;
+  document.documentElement.style.setProperty('--print-scale', scale.toFixed(4));
+}
+
+window.addEventListener('beforeprint', computeAndApplyPrintScale);
 </script>
 </body>
 </html>
