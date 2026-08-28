@@ -286,7 +286,7 @@
   <header class="top">
     <div class="brand-mark">
       <div>
-        <div class="subtitle">Registro Confirmación</div>
+        <div class="subtitle">Confirmación · Iniciación · Comunión</div>
         <h1>Listas de Asistencia</h1>
       </div>
     </div>
@@ -296,22 +296,17 @@
   <div class="panel controls">
     <h2>Elegir grupo</h2>
     <div class="row">
+      <div class="field">
+        <label for="book-select">Registro</label>
+        <select id="book-select">
+          <option value="CONFIRMACION">Registro Confirmación</option>
+          <option value="INICIACION">Registro Iniciación</option>
+          <option value="COMUNION">Registro Comunión</option>
+        </select>
+      </div>
       <div class="field" style="flex:2;">
         <label for="sheet-select">Hoja (catequista)</label>
-        <select id="sheet-select">
-          <option value="">— Selecciona un grupo —</option>
-          <option value="VICKY">VICKY</option>
-          <option value="HILIAMOR">HILIAMOR</option>
-          <option value="RAQUEL">RAQUEL</option>
-          <option value="CECILIA">CECILIA</option>
-          <option value="ESTHER">ESTHER</option>
-          <option value="FIDE DE JESUS">FIDE DE JESUS</option>
-          <option value="DON CHUY">DON CHUY</option>
-          <option value="CONCHITA">CONCHITA</option>
-          <option value="ARACELY">ARACELY</option>
-          <option value="ESTRELLA">ESTRELLA</option>
-          <option value="__custom__">Otra hoja (escribir nombre)…</option>
-        </select>
+        <select id="sheet-select"></select>
       </div>
       <div class="field" id="custom-field" style="display:none;">
         <label for="custom-sheet">Nombre exacto de la hoja</label>
@@ -357,14 +352,31 @@
     </div>
   </div>
 
-  <footer class="signoff">Generado desde REGISTRO CONFIRMACION · docs.google.com/spreadsheets</footer>
+  <footer class="signoff">Generado desde Registro Confirmación / Iniciación / Comunión · docs.google.com/spreadsheets</footer>
 </div>
 
 <script>
-const SHEET_ID = '1ob22xfpCAK0FiV6DUP77RNuTPr4a2LvI4qnxtZMX3JI';
+const BOOKS = {
+  CONFIRMACION: {
+    label: 'Registro Confirmación',
+    id: '1ob22xfpCAK0FiV6DUP77RNuTPr4a2LvI4qnxtZMX3JI',
+    groups: ['VICKY','HILIAMOR','RAQUEL','CECILIA','ESTHER','FIDE DE JESUS','DON CHUY','CONCHITA','ARACELY','ESTRELLA']
+  },
+  INICIACION: {
+    label: 'Registro Iniciación',
+    id: '1unbI6q36wnBb5B_CFpb5H67EdXtDEiGBFgFSycjgPK8',
+    groups: ['SILVIA','MARLEN','SAMANTHA','AURORA','TADEO','ANA','EDIL','JOHANA','MILDRED','LILIANA']
+  },
+  COMUNION: {
+    label: 'Registro Comunión',
+    id: '1oTXcfavomdW_wIBabTdEIZME2XuGZo1heQj1i2Q3dUY',
+    groups: ['MANDY','TINA','ROX','MILDRED','PATY','JORGE','MONSE','CONCHITA','ALIZA','RICARDA','CAYETANA','LIDIA']
+  }
+};
 
 document.getElementById('today-label').textContent = new Date().toLocaleDateString('es-MX', {year:'numeric', month:'long', day:'numeric'});
 
+const bookSelect = document.getElementById('book-select');
 const sheetSelect = document.getElementById('sheet-select');
 const customField = document.getElementById('custom-field');
 const customInput = document.getElementById('custom-sheet');
@@ -379,6 +391,19 @@ const dateColsWrap = document.getElementById('date-cols');
 const addDateBtn = document.getElementById('add-date');
 const printBtn = document.getElementById('print-btn');
 const refreshBtn = document.getElementById('refresh-btn');
+
+function populateGroups(){
+  const book = BOOKS[bookSelect.value];
+  sheetSelect.innerHTML = '<option value="">— Selecciona un grupo —</option>' +
+    book.groups.map(g => `<option value="${g}">${g}</option>`).join('') +
+    '<option value="__custom__">Otra hoja (escribir nombre)…</option>';
+  customField.style.display = 'none';
+  outputPanel.classList.remove('ready');
+  setStatus('');
+}
+
+bookSelect.addEventListener('change', populateGroups);
+populateGroups();
 
 sheetSelect.addEventListener('change', () => {
   customField.style.display = sheetSelect.value === '__custom__' ? 'flex' : 'none';
@@ -413,10 +438,11 @@ async function loadSheet(){
     setStatus('Elige o escribe el nombre de una hoja primero.', true);
     return;
   }
-  setStatus('⏳ Cargando datos de "' + name + '"…');
+  const book = BOOKS[bookSelect.value];
+  setStatus('⏳ Cargando datos de "' + name + '" (' + book.label + ')…');
   loadBtn.disabled = true;
 
-  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(name)}`;
+  const url = `https://docs.google.com/spreadsheets/d/${book.id}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(name)}`;
 
   try{
     const res = await fetch(url);
@@ -456,8 +482,8 @@ async function loadSheet(){
       throw new Error('EMPTY');
     }
 
-    renderTable(name, people);
-    setStatus(`✓ ${people.length} inscritos cargados de "${name}".`);
+    renderTable(name, people, book.label);
+    setStatus(`✓ ${people.length} inscritos cargados de "${name}" — ${book.label}.`);
   }catch(err){
     let msg = 'No se pudo cargar la hoja "' + name + '". ';
     if(err.message === 'NOT_FOUND'){
@@ -474,10 +500,10 @@ async function loadSheet(){
   }
 }
 
-function renderTable(groupName, people){
+function renderTable(groupName, people, bookLabel){
   outGroup.textContent = groupName;
   const dateInputs = Array.from(document.querySelectorAll('.date-input')).map(i => i.value).filter(Boolean);
-  outMeta.innerHTML = `Grupo <strong>${groupName}</strong><span class="count-badge">${people.length} inscritos</span>`;
+  outMeta.innerHTML = `${bookLabel} · Grupo <strong>${groupName}</strong><span class="count-badge">${people.length} inscritos</span>`;
 
   theadRow.innerHTML = `
     <th style="width:34px;">No.</th>
