@@ -532,15 +532,6 @@ async function loadSheet(){
       throw new Error('EMPTY');
     }
 
-    people.sort((a, b) => {
-      const collator = new Intl.Collator('es', {sensitivity:'base'});
-      return collator.compare(a.apellidoPaterno, b.apellidoPaterno)
-        || collator.compare(a.apellidoMaterno, b.apellidoMaterno)
-        || collator.compare(a.nombres, b.nombres);
-    });
-    // Renumerar según el nuevo orden alfabético
-    people.forEach((p, idx) => { p.no = idx + 1; });
-
     renderTable(name, people, book.label);
     setStatus(`✓ ${people.length} inscritos cargados de "${name}" — ${book.label}.`);
   }catch(err){
@@ -562,7 +553,7 @@ async function loadSheet(){
 function renderTable(groupName, people, bookLabel){
   outGroup.textContent = groupName;
   const dateInputs = Array.from(document.querySelectorAll('.date-input')).map(i => i.value).filter(Boolean);
-  outMeta.innerHTML = `${bookLabel} · Grupo <strong>${groupName}</strong><span class="count-badge">${people.length} inscritos</span><br>Orden alfabético por apellido paterno`;
+  outMeta.innerHTML = `${bookLabel} · Grupo <strong>${groupName}</strong><span class="count-badge">${people.length} inscritos</span>`;
 
   theadRow.innerHTML = `
     <th style="width:34px;">No.</th>
