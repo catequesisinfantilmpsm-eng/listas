@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Registro · Listas de Asistencia</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap');
+
+  :root{
+    --paper:#f6f3ec;
+    --ink:#1f2a24;
+    --ink-soft:#5b6b60;
+    --rule:#c9c2ae;
+    --evergreen:#2f4a3c;
+    --evergreen-deep:#20342a;
+    --brass:#a9793f;
+    --card:#fffdf8;
+    --danger:#9c4b3f;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+    padding:32px 20px 60px;
+  }
+
+  .wrap{max-width:900px;margin:0 auto;}
+
+  header.top{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    gap:16px;
+    border-bottom:2px solid var(--ink);
+    padding-bottom:14px;
+    margin-bottom:28px;
+    flex-wrap:wrap;
+  }
+  .brand-mark{
+    display:flex;
+    align-items:baseline;
+    gap:10px;
+  }
+  .brand-mark .no{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    color:var(--brass);
+    letter-spacing:.12em;
+  }
+  h1{
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    font-size:clamp(28px,4vw,38px);
+    margin:0;
+    letter-spacing:-0.01em;
+    color:var(--evergreen-deep);
+  }
+  .subtitle{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    color:var(--ink-soft);
+    text-transform:uppercase;
+    letter-spacing:.08em;
+  }
+
+  .panel{
+    background:var(--card);
+    border:1px solid var(--rule);
+    border-radius:2px;
+    padding:22px 24px;
+    margin-bottom:24px;
+    box-shadow:0 1px 0 var(--rule);
+  }
+  .panel h2{
+    font-family:'Fraunces',serif;
+    font-size:15px;
+    font-weight:600;
+    margin:0 0 16px;
+    color:var(--evergreen-deep);
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .panel h2::before{
+    content:'';
+    width:16px;height:2px;
+    background:var(--brass);
+    display:inline-block;
+  }
+
+  .row{
+    display:flex;
+    gap:16px;
+    flex-wrap:wrap;
+    align-items:flex-end;
+  }
+  .field{display:flex;flex-direction:column;gap:6px;flex:1;min-width:180px;}
+  .field label{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    color:var(--ink-soft);
+  }
+  select, input[type=text], input[type=date]{
+    font-family:'Inter',sans-serif;
+    font-size:14px;
+    padding:10px 12px;
+    border:1px solid var(--rule);
+    border-radius:2px;
+    background:#fff;
+    color:var(--ink);
+  }
+  select:focus, input:focus{outline:2px solid var(--evergreen); outline-offset:1px;}
+
+  .datecols{display:flex;gap:10px;flex-wrap:wrap;}
+  .datecols .field{min-width:130px;flex:0 0 auto;}
+
+  button{
+    font-family:'Inter',sans-serif;
+    font-weight:600;
+    font-size:14px;
+    padding:11px 20px;
+    border-radius:2px;
+    border:1px solid var(--evergreen-deep);
+    cursor:pointer;
+    transition:transform .12s ease, background .15s ease;
+  }
+  button.primary{background:var(--evergreen); color:#fff;}
+  button.primary:hover{background:var(--evergreen-deep);}
+  button.ghost{background:transparent; color:var(--evergreen-deep);}
+  button.ghost:hover{background:#eee7d6;}
+  button:active{transform:scale(.98);}
+  button:disabled{opacity:.5; cursor:not-allowed;}
+
+  .status{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12.5px;
+    margin-top:12px;
+    color:var(--ink-soft);
+  }
+  .status.error{color:var(--danger);}
+
+  #sheet-output{display:none;}
+  #sheet-output.ready{display:block;}
+
+  .sheet-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    flex-wrap:wrap;
+    gap:10px;
+    margin-bottom:6px;
+  }
+  .sheet-head .group-name{
+    font-family:'Fraunces',serif;
+    font-weight:700;
+    font-size:26px;
+    color:var(--evergreen-deep);
+  }
+  .sheet-head .meta{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11.5px;
+    color:var(--ink-soft);
+    text-align:right;
+    line-height:1.5;
+  }
+  .count-badge{
+    display:inline-block;
+    background:var(--evergreen);
+    color:#fff;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    padding:3px 9px;
+    border-radius:20px;
+    margin-left:8px;
+  }
+
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:14px;
+    background:var(--card);
+  }
+  thead th{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10.5px;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    color:#fff;
+    background:var(--evergreen-deep);
+    padding:10px 8px;
+    text-align:left;
+    border:1px solid var(--evergreen-deep);
+  }
+  thead th.check-col{text-align:center; width:52px;}
+  tbody td{
+    padding:9px 8px;
+    border:1px solid var(--rule);
+    font-size:13.5px;
+    vertical-align:middle;
+  }
+  tbody tr:nth-child(even){background:#faf8f1;}
+  tbody td.num{
+    font-family:'IBM Plex Mono',monospace;
+    color:var(--ink-soft);
+    width:34px;
+    text-align:center;
+  }
+  tbody td.check-col{text-align:center;}
+  .box{
+    width:16px;height:16px;
+    border:1.4px solid var(--ink);
+    display:inline-block;
+    border-radius:2px;
+  }
+  tbody td.name{font-weight:500;}
+  tbody td.tel{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    color:var(--ink-soft);
+    white-space:nowrap;
+  }
+  .pago-pill{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    padding:2px 7px;
+    border-radius:20px;
+    border:1px solid var(--rule);
+  }
+
+  .actions-row{
+    display:flex;
+    justify-content:flex-end;
+    gap:10px;
+    margin-top:18px;
+  }
+
+  footer.signoff{
+    margin-top:28px;
+    padding-top:14px;
+    border-top:1px solid var(--rule);
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    color:var(--ink-soft);
+    text-align:center;
+  }
+
+  .spinner{
+    width:14px;height:14px;
+    border:2px solid var(--rule);
+    border-top-color:var(--evergreen);
+    border-radius:50%;
+    display:inline-block;
+    animation:spin .7s linear infinite;
+    vertical-align:middle;
+    margin-right:6px;
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  @media print{
+    body{background:#fff; padding:0;}
+    .panel.controls, .actions-row, footer.signoff, header.top .subtitle{display:none !important;}
+    header.top{border-bottom:2px solid #000; margin-bottom:16px;}
+    .panel{box-shadow:none; border:none; padding:0;}
+    table{page-break-inside:auto;}
+    tr{page-break-inside:avoid;}
+    thead th{background:#eee !important; color:#000 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
+  }
+
+  @media (max-width:600px){
+    .sheet-head{flex-direction:column; align-items:flex-start;}
+    .sheet-head .meta{text-align:left;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="brand-mark">
+      <div>
+        <div class="subtitle">Registro Confirmación</div>
+        <h1>Listas de Asistencia</h1>
+      </div>
+    </div>
+    <div class="subtitle" id="today-label"></div>
+  </header>
+
+  <div class="panel controls">
+    <h2>Elegir grupo</h2>
+    <div class="row">
+      <div class="field" style="flex:2;">
+        <label for="sheet-select">Hoja (catequista)</label>
+        <select id="sheet-select">
+          <option value="">— Selecciona un grupo —</option>
+          <option value="VICKY">VICKY</option>
+          <option value="HILIAMOR">HILIAMOR</option>
+          <option value="RAQUEL">RAQUEL</option>
+          <option value="CECILIA">CECILIA</option>
+          <option value="ESTHER">ESTHER</option>
+          <option value="FIDE DE JESUS">FIDE DE JESUS</option>
+          <option value="DON CHUY">DON CHUY</option>
+          <option value="CONCHITA">CONCHITA</option>
+          <option value="ARACELY">ARACELY</option>
+          <option value="ESTRELLA">ESTRELLA</option>
+          <option value="__custom__">Otra hoja (escribir nombre)…</option>
+        </select>
+      </div>
+      <div class="field" id="custom-field" style="display:none;">
+        <label for="custom-sheet">Nombre exacto de la hoja</label>
+        <input type="text" id="custom-sheet" placeholder="Ej. VICKY">
+      </div>
+      <div class="field" style="flex:0 0 auto;">
+        <label>&nbsp;</label>
+        <button class="primary" id="load-btn">Generar lista</button>
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:18px;">
+      <div class="field" style="flex:2;">
+        <label>Columnas de asistencia (fechas)</label>
+        <div class="datecols" id="date-cols">
+          <input type="date" class="date-input">
+          <input type="date" class="date-input">
+          <input type="date" class="date-input">
+          <input type="date" class="date-input">
+        </div>
+      </div>
+      <div class="field" style="flex:0 0 auto;">
+        <label>&nbsp;</label>
+        <button class="ghost" id="add-date">+ Agregar fecha</button>
+      </div>
+    </div>
+
+    <div class="status" id="status"></div>
+  </div>
+
+  <div id="sheet-output" class="panel">
+    <div class="sheet-head">
+      <div class="group-name" id="out-group">—</div>
+      <div class="meta" id="out-meta"></div>
+    </div>
+    <table id="out-table">
+      <thead><tr id="out-thead-row"></tr></thead>
+      <tbody id="out-tbody"></tbody>
+    </table>
+    <div class="actions-row">
+      <button class="ghost" id="refresh-btn">Actualizar datos</button>
+      <button class="primary" id="print-btn">Imprimir / Guardar PDF</button>
+    </div>
+  </div>
+
+  <footer class="signoff">Generado desde REGISTRO CONFIRMACION · docs.google.com/spreadsheets</footer>
+</div>
+
+<script>
+const SHEET_ID = '1ob22xfpCAK0FiV6DUP77RNuTPr4a2LvI4qnxtZMX3JI';
+
+document.getElementById('today-label').textContent = new Date().toLocaleDateString('es-MX', {year:'numeric', month:'long', day:'numeric'});
+
+const sheetSelect = document.getElementById('sheet-select');
+const customField = document.getElementById('custom-field');
+const customInput = document.getElementById('custom-sheet');
+const loadBtn = document.getElementById('load-btn');
+const statusEl = document.getElementById('status');
+const outputPanel = document.getElementById('sheet-output');
+const outGroup = document.getElementById('out-group');
+const outMeta = document.getElementById('out-meta');
+const theadRow = document.getElementById('out-thead-row');
+const tbody = document.getElementById('out-tbody');
+const dateColsWrap = document.getElementById('date-cols');
+const addDateBtn = document.getElementById('add-date');
+const printBtn = document.getElementById('print-btn');
+const refreshBtn = document.getElementById('refresh-btn');
+
+sheetSelect.addEventListener('change', () => {
+  customField.style.display = sheetSelect.value === '__custom__' ? 'flex' : 'none';
+});
+
+addDateBtn.addEventListener('click', () => {
+  const inp = document.createElement('input');
+  inp.type = 'date';
+  inp.className = 'date-input';
+  dateColsWrap.appendChild(inp);
+});
+
+function currentSheetName(){
+  if(sheetSelect.value === '__custom__') return customInput.value.trim();
+  return sheetSelect.value;
+}
+
+function setStatus(msg, isError){
+  statusEl.textContent = msg;
+  statusEl.className = 'status' + (isError ? ' error' : '');
+}
+
+function fmtDateShort(iso){
+  if(!iso) return '';
+  const [y,m,d] = iso.split('-');
+  return `${d}/${m}`;
+}
+
+async function loadSheet(){
+  const name = currentSheetName();
+  if(!name){
+    setStatus('Elige o escribe el nombre de una hoja primero.', true);
+    return;
+  }
+  setStatus('⏳ Cargando datos de "' + name + '"…');
+  loadBtn.disabled = true;
+
+  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(name)}`;
+
+  try{
+    const res = await fetch(url);
+    if(!res.ok){
+      throw new Error('HTTP ' + res.status);
+    }
+    const csvText = await res.text();
+
+    if(csvText.trim().startsWith('<') || csvText.includes('<!DOCTYPE')){
+      throw new Error('NOT_FOUND');
+    }
+
+    const parsed = Papa.parse(csvText.trim(), {skipEmptyLines:'greedy'});
+    const rows = parsed.data;
+
+    // Detect header row vs data: assume row 0 may be headers (No/Nombre/Apellido/Tel/Pago) or data.
+    let startIdx = 0;
+    const first = (rows[0]||[]).map(c => (c||'').toString().trim().toLowerCase());
+    const looksLikeHeader = first.some(c => ['no','no.','nombre','apellido','tel','telefono','teléfono','pago'].includes(c));
+    if(looksLikeHeader) startIdx = 1;
+
+    const people = [];
+    for(let i = startIdx; i < rows.length; i++){
+      const r = rows[i];
+      if(!r || r.length === 0) continue;
+      const nombre = (r[1]||'').toString().trim();
+      const apellido = (r[2]||'').toString().trim();
+      if(!nombre && !apellido) continue;
+      people.push({
+        no: (r[0]||'').toString().trim() || (people.length+1),
+        nombre,
+        apellido,
+        tel: (r[3]||'').toString().trim(),
+        pago: (r[4]||'').toString().trim()
+      });
+    }
+
+    if(people.length === 0){
+      throw new Error('EMPTY');
+    }
+
+    renderTable(name, people);
+    setStatus(`✓ ${people.length} inscritos cargados de "${name}".`);
+  }catch(err){
+    let msg = 'No se pudo cargar la hoja "' + name + '". ';
+    if(err.message === 'NOT_FOUND'){
+      msg += 'No existe una pestaña con ese nombre exacto, o la hoja no es pública.';
+    }else if(err.message === 'EMPTY'){
+      msg += 'No se encontraron filas con nombre en las columnas B/C.';
+    }else{
+      msg += 'Revisa que el archivo de Google Sheets tenga acceso "Cualquiera con el enlace puede ver".';
+    }
+    setStatus(msg, true);
+    outputPanel.classList.remove('ready');
+  }finally{
+    loadBtn.disabled = false;
+  }
+}
+
+function renderTable(groupName, people){
+  outGroup.textContent = groupName;
+  const dateInputs = Array.from(document.querySelectorAll('.date-input')).map(i => i.value).filter(Boolean);
+  outMeta.innerHTML = `Grupo <strong>${groupName}</strong><span class="count-badge">${people.length} inscritos</span>`;
+
+  theadRow.innerHTML = `
+    <th style="width:34px;">No.</th>
+    <th>Nombre completo</th>
+    <th style="width:110px;">Teléfono</th>
+    <th style="width:90px;">Pago</th>
+    ${dateInputs.length
+      ? dateInputs.map(d => `<th class="check-col">${fmtDateShort(d)}</th>`).join('')
+      : `<th class="check-col">Asist. 1</th><th class="check-col">Asist. 2</th><th class="check-col">Asist. 3</th><th class="check-col">Asist. 4</th>`
+    }
+  `;
+
+  const colCount = dateInputs.length || 4;
+
+  tbody.innerHTML = people.map((p, idx) => `
+    <tr>
+      <td class="num">${p.no || idx+1}</td>
+      <td class="name">${escapeHtml(p.apellido)}${p.apellido && p.nombre ? ', ' : ''}${escapeHtml(p.nombre)}</td>
+      <td class="tel">${escapeHtml(p.tel) || '—'}</td>
+      <td>${p.pago ? `<span class="pago-pill">${escapeHtml(p.pago)}</span>` : '—'}</td>
+      ${Array.from({length: colCount}).map(() => `<td class="check-col"><span class="box"></span></td>`).join('')}
+    </tr>
+  `).join('');
+
+  outputPanel.classList.add('ready');
+}
+
+function escapeHtml(str){
+  return (str||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+loadBtn.addEventListener('click', loadSheet);
+refreshBtn.addEventListener('click', loadSheet);
+printBtn.addEventListener('click', () => window.print());
+</script>
+</body>
+</html>
