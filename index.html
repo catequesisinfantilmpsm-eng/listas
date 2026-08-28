@@ -397,6 +397,12 @@
 </div>
 
 <script>
+// Algunas pestañas no hacen match confiable por nombre (espacios ocultos, etc.).
+// Para esos casos forzamos el gid exacto de la pestaña.
+const GID_OVERRIDES = {
+  'CONFIRMACION:CECILIA': '1544674544'
+};
+
 const BOOKS = {
   CONFIRMACION: {
     label: 'Registro Confirmación',
@@ -492,7 +498,11 @@ async function loadSheet(){
   setStatus('⏳ Cargando datos de "' + name + '" (' + book.label + ')…');
   loadBtn.disabled = true;
 
-  const url = `https://docs.google.com/spreadsheets/d/${book.id}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(name)}`;
+  const overrideKey = bookSelect.value + ':' + name.trim().toUpperCase();
+  const overrideGid = GID_OVERRIDES[overrideKey];
+  const url = overrideGid
+    ? `https://docs.google.com/spreadsheets/d/${book.id}/export?format=csv&gid=${overrideGid}`
+    : `https://docs.google.com/spreadsheets/d/${book.id}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(name)}`;
 
   try{
     const res = await fetch(url);
