@@ -401,7 +401,7 @@ const BOOKS = {
   CONFIRMACION: {
     label: 'Registro Confirmación',
     id: '1ob22xfpCAK0FiV6DUP77RNuTPr4a2LvI4qnxtZMX3JI',
-    groups: ['VICKY','HILIAMOR','RAQUEL','CECILIA','ESTHER','FIDE DE JESUS','DON CHUY','CONCHITA','ARACELY','ESTRELLA']
+    groups: ['VICKY','HILIAMOR','RAQUEL','CECILIA','ESTHER','FIDE DE JESUS','DON CHUY','CONCHITA','ARACELI','ESTRELLA']
   },
   INICIACION: {
     label: 'Registro Iniciación',
@@ -482,6 +482,10 @@ async function loadSheet(){
   const name = currentSheetName();
   if(!name){
     setStatus('Elige o escribe el nombre de una hoja primero.', true);
+    return;
+  }
+  if(name.trim().toUpperCase() === 'INDICE'){
+    setStatus('"INDICE" es la hoja resumen, no un grupo de asistencia. Elige una catequista.', true);
     return;
   }
   const book = BOOKS[bookSelect.value];
