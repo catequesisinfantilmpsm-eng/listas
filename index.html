@@ -432,25 +432,23 @@ async function loadSheet(){
     const parsed = Papa.parse(csvText.trim(), {skipEmptyLines:'greedy'});
     const rows = parsed.data;
 
-    // Detect header row vs data: assume row 0 may be headers (No/Nombre/Apellido/Tel/Pago) or data.
-    let startIdx = 0;
-    const first = (rows[0]||[]).map(c => (c||'').toString().trim().toLowerCase());
-    const looksLikeHeader = first.some(c => ['no','no.','nombre','apellido','tel','telefono','teléfono','pago'].includes(c));
-    if(looksLikeHeader) startIdx = 1;
+    // Fila 1 (idx 0): libre/título. Fila 2 (idx 1): encabezados (NO, APELLIDO PATERNO, APELLIDO MATERNO, NOMBRE(S)).
+    // Fila 3 en adelante (idx 2+): datos.
+    const startIdx = 2;
 
     const people = [];
     for(let i = startIdx; i < rows.length; i++){
       const r = rows[i];
       if(!r || r.length === 0) continue;
-      const nombre = (r[1]||'').toString().trim();
-      const apellido = (r[2]||'').toString().trim();
-      if(!nombre && !apellido) continue;
+      const apellidoPaterno = (r[1]||'').toString().trim();
+      const apellidoMaterno = (r[2]||'').toString().trim();
+      const nombres = (r[3]||'').toString().trim();
+      if(!apellidoPaterno && !apellidoMaterno && !nombres) continue;
       people.push({
         no: (r[0]||'').toString().trim() || (people.length+1),
-        nombre,
-        apellido,
-        tel: (r[3]||'').toString().trim(),
-        pago: (r[4]||'').toString().trim()
+        apellidoPaterno,
+        apellidoMaterno,
+        nombres
       });
     }
 
@@ -483,9 +481,9 @@ function renderTable(groupName, people){
 
   theadRow.innerHTML = `
     <th style="width:34px;">No.</th>
-    <th>Nombre completo</th>
-    <th style="width:110px;">Teléfono</th>
-    <th style="width:90px;">Pago</th>
+    <th>Apellido Paterno</th>
+    <th>Apellido Materno</th>
+    <th>Nombre(s)</th>
     ${dateInputs.length
       ? dateInputs.map(d => `<th class="check-col">${fmtDateShort(d)}</th>`).join('')
       : `<th class="check-col">Asist. 1</th><th class="check-col">Asist. 2</th><th class="check-col">Asist. 3</th><th class="check-col">Asist. 4</th>`
@@ -497,9 +495,9 @@ function renderTable(groupName, people){
   tbody.innerHTML = people.map((p, idx) => `
     <tr>
       <td class="num">${p.no || idx+1}</td>
-      <td class="name">${escapeHtml(p.apellido)}${p.apellido && p.nombre ? ', ' : ''}${escapeHtml(p.nombre)}</td>
-      <td class="tel">${escapeHtml(p.tel) || '—'}</td>
-      <td>${p.pago ? `<span class="pago-pill">${escapeHtml(p.pago)}</span>` : '—'}</td>
+      <td class="name">${escapeHtml(p.apellidoPaterno) || '—'}</td>
+      <td class="name">${escapeHtml(p.apellidoMaterno) || '—'}</td>
+      <td class="name">${escapeHtml(p.nombres) || '—'}</td>
       ${Array.from({length: colCount}).map(() => `<td class="check-col"><span class="box"></span></td>`).join('')}
     </tr>
   `).join('');
